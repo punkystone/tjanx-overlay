@@ -13,7 +13,6 @@ export const initWebsocket = (): void => {
     const parsed = JSON.parse(e.data);
     if (isTjanXResponse(parsed)) {
       const ranks = parsed as TjanxResponse;
-      console.log("TjanXResponse:", ranks);
       ranks.sort((a, b) => b.votes - a.votes);
       ranksStore.set(ranks.slice(0, 5));
     }
