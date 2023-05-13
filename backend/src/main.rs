@@ -1,38 +1,40 @@
-use std::{io::Error, time::Duration};
+pub mod env;
+mod errors;
+mod tjanx_service;
+pub mod websocket_service;
 
-use futures_util::SinkExt;
+use std::time::Duration;
 
-use tokio::net::{TcpListener, TcpStream};
-use tokio_tungstenite::tungstenite::Message;
+use errors::run_error::RunError;
+
+use tjanx_service::TjanXService;
+
+use tokio::sync::broadcast::channel;
+use tracing::{error, warn};
+use websocket_service::start_websocket;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    let try_socket = TcpListener::bind("0.0.0.0:8080").await;
-    let listener = try_socket.expect("Failed to bind");
-
-    while let Ok((stream, _)) = listener.accept().await {
-        tokio::spawn(accept_connection(stream));
+async fn main() {
+    tracing_subscriber::fmt::init();
+    if let Err(e) = run().await {
+        error!("Error: {}", e);
     }
-
-    Ok(())
 }
 
-async fn accept_connection(stream: TcpStream) {
-    let addr = stream
-        .peer_addr()
-        .expect("connected streams should have a peer address");
-    println!("Peer address: {}", addr);
+async fn run() -> Result<(), RunError> {
+    let env = env::Env::check_variables()?;
+    let tjanx_service = TjanXService::new(env.api_key);
+    let tjanx_service_sender = tjanx_service.clone();
+    let (tx, rx) = channel::<String>(1);
 
-    let mut ws_stream = tokio_tungstenite::accept_async(stream)
-        .await
-        .expect("Error during the websocket handshake occurred");
-
-    println!("New WebSocket connection: {}", addr);
-    loop {
-        ws_stream
-            .send(Message::Text("Hello World".to_string()))
+    tokio::spawn(async move {
+        if let Err(error) = tjanx_service_sender
+            .send_rankings(tx, Duration::from_secs(env.fetch_interval))
             .await
-            .unwrap();
-        tokio::time::sleep(Duration::from_secs(1)).await;
-    }
+        {
+            warn!("Error: {}", error);
+        }
+    });
+    start_websocket(rx, tjanx_service, env.port).await?;
+    Ok(())
 }
