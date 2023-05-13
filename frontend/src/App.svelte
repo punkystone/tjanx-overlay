@@ -1,15 +1,7 @@
 <script lang="ts">
-  import Header from "./lib/Header.svelte";
-  import RankList from "./lib/RankList.svelte";
+  import RankList from "./lib/components/RankList.svelte";
+  import { initWebsocket } from "./lib/websocket";
+  initWebsocket();
 </script>
 
-<div class="main">
-  <Header />
-  <RankList />
-</div>
-
-<style>
-  .main {
-    padding: 0px 10px;
-  }
-</style>
+<RankList />

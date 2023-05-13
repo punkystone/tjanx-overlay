@@ -1,0 +1,27 @@
+{
+    "$id": "TjanXResponse",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string"
+            },
+            "name": {
+                "type": "string"
+            },
+            "url": {
+                "type": "string"
+            },
+            "votes": {
+                "type": "integer"
+            }
+        },
+        "required": [
+            "id",
+            "name",
+            "url",
+            "votes"
+        ]
+    }
+}

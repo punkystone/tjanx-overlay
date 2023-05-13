@@ -11,3 +11,15 @@ services:
       - FETCH_INTERVAL
     ports:
       - 0.0.0.0:$PORT:$PORT
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_WEBSOCKET_PORT=$PORT
+        - VITE_SECURE=$SECURE
+    restart: unless-stopped
+    ports:
+      - 80:80
+    environment:
+      - DEV=true
